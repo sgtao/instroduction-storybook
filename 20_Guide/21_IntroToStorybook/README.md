@@ -244,61 +244,80 @@ export default preview;
 ### 状態を作り出す
 - Taskコンポーネントのスタイリングをするため、状態による変化をつける
 ```JavaScript
-// src/components/Task.js
+// src/components/Task.jsx
 import React from 'react';
-//
-const Task = ({
-  task: { id, title, state },
-  onArchiveTask,
-  onPinTask,
-}) => {
+
+export default function Task({ task: { id, title, state }, onArchiveTask, onPinTask }) {
   return (
     <div className={`list-item ${state}`}>
-        <label className="checkbox">
+      <label
+        htmlFor="checked"
+        aria-label={`archiveTask-${id}`}
+        className="checkbox"
+      >
         <input
-            type="checkbox"
-            defaultChecked={state === 'TASK_ARCHIVED'}
-            disabled={true}
-            name="checked"
+          type="checkbox"
+          disabled={true}
+          name="checked"
+          id={`archiveTask-${id}`}
+          checked={state === "TASK_ARCHIVED"}
         />
         <span
-            className="checkbox-custom"
-            onClick={() => onArchiveTask(id)}
-            id={`archiveTask-${id}`}
-            aria-label={`archiveTask-${id}`}
+          className="checkbox-custom"
+          onClick={() => onArchiveTask(id)}
         />
-        </label>
-        <div className="title">
-        <input type="text" value={title} readOnly={true} placeholder="Input title" />
-        </div>
-        <div className="actions" onClick={event => event.stopPropagation()}>
-        {state !== 'TASK_ARCHIVED' && (
-            // eslint-disable-next-line jsx-a11y/anchor-is-valid
-            <a onClick={() => onPinTask(id)}>
-            <span className={`icon-star`} id={`pinTask-${id}`} aria-label={`pinTask-${id}`} />
-            </a>
-        )}
-        </div>
+      </label>
+
+      <label htmlFor="title" aria-label={title} className="title">
+        <input
+          type="text"
+          value={title}
+          readOnly={true}
+          name="title"
+          placeholder="Input title"
+        />
+      </label>
+
+      {state !== "TASK_ARCHIVED" && (
+        <button
+          className="pin-button"
+          onClick={() => onPinTask(id)}
+          id={`pinTask-${id}`}
+          aria-label={`pinTask-${id}`}
+          key={`pinTask-${id}`}
+        >
+          <span className={`icon-star`} />
+        </button>
+      )}
     </div>
   );
 }
-//
-export default Task;
 ```
+
+#### 動作確認
+- styling後のstorybook：
+
+| storybook Task(Pinned) | storybook Task(Archived) |
+|-----|-----|
+| 左メニューの`Pinned`選択 | メニュー`Archived`選択 |
+| ![image](./images/023_storybook-Task-Pinned.png) | ![image](./images/024_storybook-Task-Archived.png) |
+
+
 
 ### データ要件を明示する
 - PropTypes を用いた型チェックを追加する
   - 関連情報：https://ja.reactjs.org/docs/typechecking-with-proptypes.html
-
+  - `Task.jsx`に下を追加することで、タスクコンポーネントの誤使用された際、警告が表示されます。
 ```JavaScript
 // src/components/Task.js
 import React from 'react';
-import PropTypes from 'prop-types'; // added import
++ import PropTypes from 'prop-types'; // added import
 //
 const Task = ({..})=>{
   ...
 }
 //
+// 下を追記：
 Task.propTypes = {
     /** Composition of the task */
     task: PropTypes.shape({
