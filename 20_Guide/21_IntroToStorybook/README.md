@@ -406,54 +406,67 @@ module.exports = {
   - Taskコンポーネントの複数状態を組み合わせると「通常タスクのみ」「ピン留めありタスク」の組み合わせができる
   - タスクデータが送信中の状態や、タスクが０の状態（空の状態）などを複合的に作れる
 
+<br>
+
+- 初期状態とPINNED状態
+![image](https://storybook.js.org/tutorials/intro-to-storybook/tasklist-states-1.png)
+
+<br>
+
+- EMPTY状態とLOADING状態
+![image](https://storybook.js.org/tutorials/intro-to-storybook/tasklist-states-2.png)
+
 ### セットアップする
 - TaskList のコンポーネントとそのストーリーファイルを追加する
 
 ```JavaScript
-// src/components/TaskList.js
+// src/components/TaskList.jsx
+// TaskList.jsx
 import React from 'react';
+
 import Task from './Task';
-//
+
 export default function TaskList({ loading, tasks, onPinTask, onArchiveTask }) {
-    const events = {
-      onPinTask,
-      onArchiveTask,
-    };
-    // when loading Tasks
-    if (loading) {
-      return <div className="list-items">loading</div>;
-    }
-    // if no Task, show empty page
-    if (tasks.length === 0) {
-      return <div className="list-items">empty</div>;
-    }
-    // 上以外のとき複数のタスクをmap関数で生成する
-    return (
-      <div className="list-items">
-        {tasks.map(task => (
-          <Task key={task.id} task={task} {...events} />
-        ))}
-      </div>
-    );
+  const events = {
+    onPinTask,
+    onArchiveTask,
+  };
+
+  if (loading) {
+    return <div className="list-items">loading</div>;
   }
-//
-// EOF
+
+  if (tasks.length === 0) {
+    return <div className="list-items">empty</div>;
+  }
+
+  return (
+    <div className="list-items">
+      {tasks.map(task => (
+        <Task key={task.id} task={task} {...events} />
+      ))}
+    </div>
+  );
+}
 ```
 
 - ストーリーファイルも追加する
 ```JavaScript
-// src/components/TaskList.stories.js
+// TaskList.stories.jsx
+
 import React from 'react';
+
 import TaskList from './TaskList';
 import * as TaskStories from './Task.stories';
-//
+
 export default {
   component: TaskList,
   title: 'TaskList',
   decorators: [story => <div style={{ padding: '3rem' }}>{story()}</div>],
 };
-//
+
 const Template = args => <TaskList {...args} />;
+
 export const Default = Template.bind({});
 Default.args = {
   // Shaping the stories through args composition.
@@ -467,7 +480,7 @@ Default.args = {
     { ...TaskStories.Default.args.task, id: '6', title: 'Task 6' },
   ],
 };
-//
+
 export const WithPinnedTasks = Template.bind({});
 WithPinnedTasks.args = {
   // Shaping the stories through args composition.
@@ -477,13 +490,13 @@ WithPinnedTasks.args = {
     { id: '6', title: 'Task 6 (pinned)', state: 'TASK_PINNED' },
   ],
 };
-//
+
 export const Loading = Template.bind({});
 Loading.args = {
   tasks: [],
   loading: true,
 };
-//
+
 export const Empty = Template.bind({});
 Empty.args = {
   // Shaping the stories through args composition.
@@ -491,9 +504,18 @@ Empty.args = {
   ...Loading.args,
   loading: false,
 };
-//
-// EOF
 ```
+
+#### 動作確認
+
+- 初回コードの状態
+  * Taskコンポーネントを並べた状態
+
+| storybook TaskList(Default) | storybook TaskList(Loading) |
+|-----|-----|
+| ![image](./images/031_initial-tasklist-default.png) | ![image](./images/032_initial-tasklist-loading.png) |
+
+
 
 ### 状態を作りこむ
 - TaskListコンポーネントは、LoadingとEmptyの状態・スタイルをすることで表現の幅が広がる
