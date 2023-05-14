@@ -124,6 +124,31 @@ yarn dev
 | ![image](./images/011_yarn-storybook.png) | ![image](./images/012_yarn-dev-app.png) |
 
 
+#### storybookの実行ログ
+```sh
+$ yarn storybook
+...
+info => Serving static files from ././public at /
+info => Starting manager..
+╭─────────────────────────────────────────────────────────────────────╮
+│                                                                     │
+│   Storybook 7.0.6 for react-vite started                            │
+│   1.13 min for manager and 5.95 min for preview                     │
+│                                                                     │
+│   Local:            http://localhost:6006/                          │
+│   On your network:  http://172.26.167.142:6006/                     │
+│                                                                     │
+│   A new version (7.0.11) is available!                              │
+│                                                                     │
+│   Upgrade now: npx storybook@latest upgrade                         │
+│                                                                     │
+│   Read full changelog:                                              │
+│   https://github.com/storybookjs/storybook/blob/next/CHANGELOG.md   │
+│                                                                     │
+╰─────────────────────────────────────────────────────────────────────╯
+```
+
+
 ### 変更をコミットする
 - 動作確認ができたら、レポジトリにコミット
 ```shell
@@ -137,30 +162,32 @@ git branch -M main
 ## 単純なコンポーネント
 [to Top](#)
 
-### セットアップする
-- タスクのコンポーネントと、対応するストーリーファイルを作成する
+- 単純なコンポーネントを切り離して作りましょう
+  * タスクのコンポーネントと、対応するストーリーファイルを作成する
+
+### コンポーネント：Task (タスク)
+- `Task` は今回作るアプリケーションのコアとなるコンポーネント
+  * title – タスクを説明する文字列
+  * state – タスクがどのリストに存在するか。またチェックされているかどうか。
+
 ```JavaScript
-// src/components/Task.js
+// src/components/Task.jsx
 import React from 'react';
-//
-const Task = ({
-  task: { id, title, state },
-  onArchiveTask,
-  onPinTask,
-}) => {
+
+export default function Task({ task: { id, title, state }, onArchiveTask, onPinTask }) {
   return (
     <div className="list-item">
       <input type="text" value={title} readOnly={true} />
     </div>
   );
 }
-//
-export default Task;
 ```
+
+### セットアップする
 
 - ストーリーファイル
 ```JavaScript
-// src/components/Task.stories.js
+// src/components/Task.stories.jsx
 import React from 'react';
 import Task from './Task';
 //
@@ -200,27 +227,72 @@ Archived.args = {
 // EOF
 ```
 
+#### `App.jsx`の更新
+- テンプレート`App.jsx`の内容を一度クリアする
+```js
+import './App.css'
+
+function App() {
+  return (
+    <div className="App">
+      {Task}
+    </div>
+  )
+}
+
+export default App
+```
+
+#### 動作確認
+
+| storybook起動 | アプリ起動 |
+|-----|-----|
+| ![image](./images/021_storybook.png) | ![image](./images/022_reactApp.png) |
+
+
 ### 設定する
 - 作成したストーリーを認識させ、CSS ファイルを使用できるようにするため、Storybook の設定をいくつか変更する
 ```JavaScript
 // .storybook/main.js
-// .storybook/main.js
-module.exports = {
+/** @type { import('@storybook/react-vite').StorybookConfig } */
+const config = {
   // stories: ["../src/**/*.stories.mdx", "../src/**/*.stories.@(js|jsx|ts|tsx)"],
-  stories: ['../src/components/**/*.stories.js'], // change setting
+  stories: ['../src/components/**/*.stories.jsx'],
   staticDirs: ["../public"],
-...
+  addons: [
+    "@storybook/addon-links",
+    "@storybook/addon-essentials",
+    "@storybook/addon-interactions",
+  ],
+  framework: {
+    name: "@storybook/react-vite",
+    options: {},
+  },
+  docs: {
+    autodocs: "tag",
+  },
 };
+export default config;
 ```
 
 - `.storybook/preview.js`も変更する
 ```JavaScript
 // .storybook/preview.js
+/** @type { import('@storybook/react').Preview } */
 import '../src/index.css'; // append import
 //
-export const parameters = {
-...
+const preview = {
+  parameters: {
+    actions: { argTypesRegex: "^on[A-Z].*" },
+    controls: {
+      matchers: {
+        color: /(background|color)$/i,
+        date: /Date$/,
+      },
+    },
+  },
 };
+export default preview;
 ```
 
 ### 状態を作り出す
@@ -229,7 +301,6 @@ export const parameters = {
 // src/components/Task.js
 import React from 'react';
 //
-// }
 const Task = ({
   task: { id, title, state },
   onArchiveTask,
