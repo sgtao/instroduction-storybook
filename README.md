@@ -28,3 +28,7 @@
 * [Create an Addon](https://storybook.js.org/tutorials/create-an-addon/): 開発力アップさせるアドオンの作り方を紹介
   * Languages: English, Español, Français, 한국어
 
+## トレースドキュメント
+
+- [21_IntroToStorybook](./20_Guide/21_IntroToStorybook/README.md)
+
