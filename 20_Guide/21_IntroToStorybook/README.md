@@ -18,62 +18,6 @@
 - 10．[貢献する](#貢献する)
 
 
-## ソース構成
-- データまで進めた後のソース構成：
-  - `public/`フォルダ：
-```shell
-$ tree --charset unicode public/
-public/
-|-- favicon.ico
-|-- index.html
-|-- logo192.png
-|-- logo512.png
-|-- manifest.json
-`-- robots.txt
-...
-0 directories, 6 file
-$
-```
-  - `src/`フォルダ：
-```shell
-$ tree --charset unicode -F src/
-src/
-|-- App.css*
-|-- App.js*
-|-- App.test.js*
-|-- assets/
-|   |-- font/
-|   `-- icon/
-|-- components/
-|   |-- Task.js*
-|   |-- Task.stories.js*
-|   |-- TaskList.js*
-|   |-- TaskList.stories.js*
-|   `-- TaskList.test.js*
-|-- index.css*
-|-- index.js*
-|-- lib/
-|   `-- store.js*
-|-- logo.svg*
-|-- reportWebVitals.js*
-|-- setupTests.js*
-`-- stories/
-    |-- Button.jsx*
-    |-- Button.stories.jsx*
-    |-- Header.jsx*
-    |-- Header.stories.jsx*
-    |-- Introduction.stories.mdx*
-    |-- Page.jsx*
-    |-- Page.stories.jsx*
-    |-- assets/
-    |-- button.css*
-    |-- header.css*
-    `-- page.css*
-...
-7 directories, 44 files
-$
-```
-
 ## はじめに
 [to Top](#)
 
@@ -243,13 +187,6 @@ function App() {
 export default App
 ```
 
-#### 動作確認
-
-| storybook起動 | アプリ起動 |
-|-----|-----|
-| ![image](./images/021_storybook.png) | ![image](./images/022_reactApp.png) |
-
-
 ### 設定する
 - 作成したストーリーを認識させ、CSS ファイルを使用できるようにするため、Storybook の設定をいくつか変更する
 ```JavaScript
@@ -294,6 +231,15 @@ const preview = {
 };
 export default preview;
 ```
+
+
+#### 動作確認
+
+| storybook起動 | アプリ起動 |
+|-----|-----|
+| ![image](./images/021_storybook.png) | ![image](./images/022_reactApp.png) |
+
+
 
 ### 状態を作り出す
 - Taskコンポーネントのスタイリングをするため、状態による変化をつける
@@ -1305,3 +1251,59 @@ Default.parameters = {
 [to Top](#)
 
 
+
+## ソース構成
+- [データ](#データを繋ぐ)まで進めた後のソース構成：
+  - `public/`フォルダ：
+```shell
+$ tree --charset unicode public/
+public/
+|-- favicon.ico
+|-- index.html
+|-- logo192.png
+|-- logo512.png
+|-- manifest.json
+`-- robots.txt
+...
+0 directories, 6 file
+$
+```
+  - `src/`フォルダ：
+```shell
+$ tree --charset unicode -F src/
+src/
+|-- App.css*
+|-- App.js*
+|-- App.test.js*
+|-- assets/
+|   |-- font/
+|   `-- icon/
+|-- components/
+|   |-- Task.js*
+|   |-- Task.stories.js*
+|   |-- TaskList.js*
+|   |-- TaskList.stories.js*
+|   `-- TaskList.test.js*
+|-- index.css*
+|-- index.js*
+|-- lib/
+|   `-- store.js*
+|-- logo.svg*
+|-- reportWebVitals.js*
+|-- setupTests.js*
+`-- stories/
+    |-- Button.jsx*
+    |-- Button.stories.jsx*
+    |-- Header.jsx*
+    |-- Header.stories.jsx*
+    |-- Introduction.stories.mdx*
+    |-- Page.jsx*
+    |-- Page.stories.jsx*
+    |-- assets/
+    |-- button.css*
+    |-- header.css*
+    `-- page.css*
+...
+7 directories, 44 files
+$
+```
