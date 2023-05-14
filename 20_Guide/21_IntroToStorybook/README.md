@@ -337,25 +337,62 @@ Task.propTypes = {
 export default Task;
 ```
 
-### スナップショットテスト
-- チュートリアルには、「良好な出力」を記録し、出力変化のコンポーネントを特定できる方法を紹介
-  - 詳しくは、https://storybook.js.org/tutorials/intro-to-storybook/react/ja/simple-component/
-  - 追加をしたが、エラーするので保留
+### アクセシビリティの問題の検知
+- アクセシビリティテストとは、[WCAG](https://www.w3.org/WAI/standards-guidelines/wcag/) のルールなどに基づき、自動化ツールでDOM を監視します。
 
-- パッケージ追加
-```shell
-yarn add -D @storybook/addon-storyshots react-test-renderer
+#### アドオンインストール
+- 以下のコマンドでアドオンをインストール
+```sh
+yarn add --dev @storybook/addon-a11y
 ```
 
-- ソース追加
-```JavaScript
-// src/storybook.test.js
-import initStoryshots from '@storybook/addon-storyshots';
-initStoryshots();
-//
-// EOF
+#### アドオンを利用可能にする
+```js
+// .storybook/main.js
+
+module.exports = {
+  stories: ['../src/components/**/*.stories.js'],
+  staticDirs: ['../public'],
+  addons: [
+    '@storybook/addon-links',
+    '@storybook/addon-essentials',
+    '@storybook/preset-create-react-app',
+    '@storybook/addon-interactions',
++   '@storybook/addon-a11y',
+  ],
+  framework: '@storybook/react',
+  core: {
+    builder: '@storybook/builder-webpack5',
+  },
+  features: {
+    interactionsDebugger: true,
+  },
+};
 ```
-  - 追加したテストがエラーするので、本項目適用は保留（`src/storybook.test.js`を削除）
+
+#### アクセシビリティの問題
+- storybookを再実行すると、Archivedメニューでエラー発生
+  * 「Elements must have sufficient color contrast」はコントラスト不足を指摘されてる
+
+![image](./images/025_storybook-accesibilityViolate.png)
+
+
+#### 対処方法
+- テキストカラーをより暗いグレーに修正する
+
+```js
+// src/index.css
+...
+.list-item.TASK_ARCHIVED input[type="text"] {
+  /* color: #a0aec0; */
+  color: #4a5568;
+  text-decoration: line-through;
+}
+...
+```
+
+- storybookを再実行すると、ArchivedメニューのAccessibilityのエラー解消される
+![image](./images/026_recover-from-accesibilityViolate.png)
 
 
 
