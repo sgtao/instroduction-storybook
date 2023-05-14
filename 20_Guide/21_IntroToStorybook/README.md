@@ -451,6 +451,7 @@ export default function TaskList({ loading, tasks, onPinTask, onArchiveTask }) {
 ```
 
 - ストーリーファイルも追加する
+  *  [デコレーター](https://storybook.js.org/docs/react/writing-stories/decorators)を使ってストーリーに任意のラッパーを設定できます。
 ```JavaScript
 // TaskList.stories.jsx
 
@@ -520,12 +521,14 @@ Empty.args = {
 ### 状態を作りこむ
 - TaskListコンポーネントは、LoadingとEmptyの状態・スタイルをすることで表現の幅が広がる
   - `TaskList.js`のスタイリングを追加する
-
+  - データ要件とプロパティも追加
 ```JavaScript
-// src/components/TaskList.js
+// TaskList.jsx
 import React from 'react';
+import PropTypes from 'prop-types';
+
 import Task from './Task';
-//
+
 export default function TaskList({ loading, tasks, onPinTask, onArchiveTask }) {
   const events = {
     onPinTask,
@@ -562,7 +565,7 @@ export default function TaskList({ loading, tasks, onPinTask, onArchiveTask }) {
       </div>
     );
   }
-  //
+
   const tasksInOrder = [
     ...tasks.filter((t) => t.state === "TASK_PINNED"),
     ...tasks.filter((t) => t.state !== "TASK_PINNED"),
@@ -575,22 +578,7 @@ export default function TaskList({ loading, tasks, onPinTask, onArchiveTask }) {
     </div>
   );
 }
-//
-// EOF
-```
 
-### データ要件とプロパティ
-- TaskList のプロパティの要件を定義して、入力値のチェックを行う
-```JavaScript
-// src/components/TaskList.js
-import React from 'react';
-import PropTypes from 'prop-types'; // added import
-import Task from './Task';
-//
-export default function TaskList({ loading, tasks, onPinTask, onArchiveTask }) {
-  ...
-}
-//
 // check properties
 TaskList.propTypes = {
     /** Checks if it's in loading state */
@@ -601,64 +589,21 @@ TaskList.propTypes = {
     onPinTask: PropTypes.func,
     /** Event to change the task to archived */
     onArchiveTask: PropTypes.func,
-};
-TaskList.defaultProps = {
+ };
+ TaskList.defaultProps = {
     loading: false,
 };
-//
-// EOF
 ```
 
-### 自動テスト
-- React Testing Library で単体テストする
-  -  React Testing Library と @storybook/testing-react を使用し、単体テストを行います。
-  - `src/components/TaskList.test.js`として、テストファイルを作ります。
+#### 動作確認
+- スタリング後のstorybook
 
-```JavaScript
-// src/components/TaskList.test.js
-import { render } from '@testing-library/react';
-import { composeStories } from '@storybook/testing-react';
-import * as TaskListStories from './TaskList.stories'; //👈  Our stories imported here
-//
-//👇 composeStories will process all information related to the component (e.g., args)
-const { WithPinnedTasks } = composeStories(TaskListStories);
-//
-it('renders pinned tasks at the start of the list', () => {
-  const { container } = render(<WithPinnedTasks />);
-  expect(
-    container.querySelector('.list-item:nth-child(1) input[value="Task 6 (pinned)"]')
-  ).not.toBe(null);
-});
-//
-// EOF
-```
+| storybook TaskList(Loading) | storybook TaskList(Empty) |
+|-----|-----|
+| ![image](./images/034_styled-tasklist-loading.png) | ![image](./images/035_styled-tasklist-empty.png) |
 
-- `@storybook/testing-react`をインストールして、テストを実行する
-  - パッケージのインストール
-```shell
-yarn add --dev @storybook/testing-react
-```
 
-  - テスト実行結果：
-```
-yarn test --watchAll
-> PASS  src/App.test.js
-> PASS  src/components/TaskList.test.js
->
->Test Suites: 2 passed, 2 total
->Tests:       2 passed, 2 total
->Snapshots:   0 total
->Time:        4.052 s
->Ran all test suites.
->
->Watch Usage
-> › Press f to run only failed tests.
-> › Press o to only run tests related to changed files.
-> › Press q to quit watch mode.
-> › Press p to filter by a filename regex pattern.
-> › Press t to filter by a test name regex pattern.
-> › Press Enter to trigger a test run.
-```
+
 
 ## データを繋ぐ
 [to Top](#)
