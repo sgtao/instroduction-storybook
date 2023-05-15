@@ -80,7 +80,7 @@ info => Starting manager..
 │   1.13 min for manager and 5.95 min for preview                     │
 │                                                                     │
 │   Local:            http://localhost:6006/                          │
-│   On your network:  http://172.26.167.142:6006/                     │
+│   On your network:  http://xxx.xxx.xxx.xxx:6006/                     │
 │                                                                     │
 │   A new version (7.0.11) is available!                              │
 │                                                                     │
@@ -1226,65 +1226,147 @@ Error.parameters = {
 
 
 
-### Interactive stories
+### インタラクションテスト
 
-- 新しいストーリーを作るたびに、UI が壊れないように、他のすべてのストーリーを手作業でチェックする必要もあります。これは、とても大変な作業です。
-- ＝＞作業や操作を自動化する
-  - ここでは、新しく作成された InboxScreen ストーリーを更新し、コンポーネント操作を追加する
+- これまで、新しいストーリーを作るたびに、UIストーリーを手作業でチェックする必要もありました。
+  * これは、とても大変な作業です。
+  - ここでは、テストや操作を自動化する方法を紹介します
+
+#### play 関数を使ったインタラクションテスト
+- Storybook の`play`関数と`@storybook/addon-interactions`が役立ちます。
+  * `play`関数はタスクが更新されたときに UI に何が起こるかを検証します
+  * `@storybook/addon-interactions`は、一つ一つのステップごとに、Storybook のテストを可視化します
+
+<br>
+
+- 下のようにしてInboxScreen ストーリーを更新し、コンポーネント操作を追加してみましょう
 ```js
-src/components/InboxScreen.stories.js
+// src/components/InboxScreen.stories.jsx
 import React from 'react';
-//
+
 import InboxScreen from './InboxScreen';
-//
+
 import store from '../lib/store';
 import { rest } from 'msw';
 import { MockedState } from './TaskList.stories';
 import { Provider } from 'react-redux';
-//
-+ import {
-+  fireEvent,
-+  within,
-+  waitFor,
-+  waitForElementToBeRemoved
-+ } from '@storybook/testing-library';
-//
+
+// add packages
+import {
+    fireEvent,
+    within,
+    waitFor,
+    waitForElementToBeRemoved
+} from '@storybook/testing-library';
+
 export default {
-  component: InboxScreen,
-  title: 'InboxScreen',
-  decorators: [(story) => <Provider store={store}>{story()}</Provider>],
+    component: InboxScreen,
+    title: 'InboxScreen',
+    decorators: [(story) => <Provider store={store}>{story()}</Provider>],
 };
-//
+
 const Template = () => <InboxScreen />;
-//
+
 export const Default = Template.bind({});
 Default.parameters = {
-  msw: {
-    handlers: [
-      rest.get(
-        'https://jsonplaceholder.typicode.com/todos?userId=1',
-        (req, res, ctx) => {
-        (req, res, ctx) => {
-          return res(ctx.json(MockedState.tasks));
-        }
-      ),
-    ],
-  },
+    msw: {
+        handlers: [
+            rest.get(
+                'https://jsonplaceholder.typicode.com/todos?userId=1',
+                (req, res, ctx) => {
+                    return res(ctx.json(MockedState.tasks));
+                }
+            ),
+        ],
+    },
 };
-//
-+ Default.play = async ({ canvasElement }) => {
-+   const canvas = within(canvasElement);
-+   // Waits for the component to transition from the loading state
-+   await waitForElementToBeRemoved(await canvas.findByTestId('loading'));
-+   // Waits for the component to be updated based on the store
-+   await waitFor(async () => {
-+     // Simulates pinning the first task
-+     await fireEvent.click(canvas.getByLabelText('pinTask-1'));
-+     // Simulates pinning the third task
-+     await fireEvent.click(canvas.getByLabelText('pinTask-3'));
-+   });
-+ };
+
+// add Default.play
+Default.play = async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // Waits for the component to transition from the loading state
+    await waitForElementToBeRemoved(await canvas.findByTestId('loading'));
+    // Waits for the component to be updated based on the store
+    await waitFor(async () => {
+        // Simulates pinning the first task
+        await fireEvent.click(canvas.getByLabelText('pinTask-1'));
+        // Simulates pinning the third task
+        await fireEvent.click(canvas.getByLabelText('pinTask-3'));
+    });
+};
+
+// ... following (const)Error definition
 ```
+
+##### 動作確認
+
+- storybookを再起動してplay後の画面を確認する
+  * 再度playをしたいときは、`Rerun`を指示する
+
+| storybook起動後 | `Rerun`再実行 |
+|-----|-----|
+| 起動すると、`Interruction`にplay結果が表示される | 再度playする場合、`Rerun`を指示 |
+| ![image](./images/055_storybook-inbox-screen-with-play.png) | ![image](./images/056_storybook-test-play-by-rerun.png) |
+
+#### テスト自動化
+
+- `play`関数は、ストーリーを見るときだけインタラクションテストが実行されてました。
+  * コード変更時に各ストーリーを自動的にチェックしたいです。
+  * テスト自動化は、Storybook の[テストランナー](https://storybook.js.org/docs/react/writing-tests/test-runner)が可能にしてくれます。
+    +  [Playwright](https://playwright.dev/)パッケージにより、インタラクションテストを実行し、壊れたストーリーを検知します。
+
+##### パッケージインストール
+- 次のコマンドでインストール
+```sh
+yarn add --dev @storybook/test-runner
+```
+
+<br>
+
+- test-runnerのほかにも、`playwright`スクリプトで依存パッケージのインストールが必要だった
+```sh
+npx playwright install-deps  
+```
+
+##### セットアップ
+- `package.json`の scripts をアップデートし、新しいテストタスクを追加します。
+```js
+// package.json
+{
+  "scripts": {
+    ...    
+    "test-storybook": "test-storybook"
+    ...    
+  }
+}
+```
+
+##### テスト実行
+- storybookが起動している状態で、以下のコマンドを実行してください
+```sh
+yarn test-storybook --watch
+```
+
+<br>
+
+- もし、storybookをカスタムURLで起動している場合は、`--url`オプションでstorybookのURLを指定する
+```sh
+yarn test-storybook --url http://127.0.0.1:9009
+```
+
+###### 実行ログ
+```sh
+$ yarn test-storybook --watch
+#
+# Determining test suites to run...
+# スタートすると、しばらく待ってから、ストーリーを起動しているようだ
+...
+ RUNS   browser: chromium  src/components/InboxScreen.stories.jsx
+...
+```
+
+- 画面は出てこなかった
+
 
 
 ### コンポーネント駆動開発
