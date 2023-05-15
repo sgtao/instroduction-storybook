@@ -1376,76 +1376,31 @@ $ yarn test-storybook --watch
 ## デプロイ
 [to Top](#)
 
+- GitHubにpushして、[Chromatic](https://www.chromatic.com/?utm_source=storybook_website&utm_medium=link&utm_campaign=storybook)でホスティングする方法を紹介
+  * スキップ
+
 
 ## テスト
 [to Top](#)
+
+- Storybook 向けのビジュアルテスト手法を紹介
+  * Chromaticを利用した方法を紹介
+  * スキップ
 
 
 ## アドオン
 [to Top](#)
 
+- Third Partyが開発した[アドオン](https://storybook.js.org/addons)を紹介
+  * スキップ
 
 ## まとめ
 [to Top](#)
 
+- Storybook のテクニックをもっと学ぶコンテンツを紹介
 
 ## 貢献する
 [to Top](#)
 
+- Storybookを広めるための協力方法を紹介
 
-
-## ソース構成
-- [データ](#データを繋ぐ)まで進めた後のソース構成：
-  - `public/`フォルダ：
-```shell
-$ tree --charset unicode public/
-public/
-|-- favicon.ico
-|-- index.html
-|-- logo192.png
-|-- logo512.png
-|-- manifest.json
-`-- robots.txt
-...
-0 directories, 6 file
-$
-```
-  - `src/`フォルダ：
-```shell
-$ tree --charset unicode -F src/
-src/
-|-- App.css*
-|-- App.js*
-|-- App.test.js*
-|-- assets/
-|   |-- font/
-|   `-- icon/
-|-- components/
-|   |-- Task.js*
-|   |-- Task.stories.js*
-|   |-- TaskList.js*
-|   |-- TaskList.stories.js*
-|   `-- TaskList.test.js*
-|-- index.css*
-|-- index.js*
-|-- lib/
-|   `-- store.js*
-|-- logo.svg*
-|-- reportWebVitals.js*
-|-- setupTests.js*
-`-- stories/
-    |-- Button.jsx*
-    |-- Button.stories.jsx*
-    |-- Header.jsx*
-    |-- Header.stories.jsx*
-    |-- Introduction.stories.mdx*
-    |-- Page.jsx*
-    |-- Page.stories.jsx*
-    |-- assets/
-    |-- button.css*
-    |-- header.css*
-    `-- page.css*
-...
-7 directories, 44 files
-$
-```
