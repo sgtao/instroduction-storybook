@@ -612,7 +612,7 @@ TaskList.propTypes = {
 
 ### 繋がれたコンポーネント
 - TaskList コンポーネントは「presentational (表示用)」として書かれてるので、データを渡すにはデータプロバイダに繋ぐ必要があります。
-  - ここでは`Redux`を使用し、アプリケーションにシンプルなデータモデルを作ります。
+  - ここでは[Redux](https://redux.js.org/)を使用し、アプリケーションにシンプルなデータモデルを作ります。
 
 ```shell
 yarn add @reduxjs/toolkit react-redux
@@ -620,12 +620,13 @@ yarn add @reduxjs/toolkit react-redux
 
 - Redux のストアを作るため、`src/lib`フォルダの`store.js`というファイルを作ります (あえて簡単にしています):
 ```JavaScript
-// src/lib/store.js
+// src/lib/store.jsx
+
 /* A simple redux store/actions/reducer implementation.
  * A true app would be more complex and separated into different files.
  */
 import { configureStore, createSlice } from '@reduxjs/toolkit';
-//
+
 /*
  * The initial state of our store when the app loads.
  * Usually, you would fetch this from a server. Let's not worry about that now
@@ -641,7 +642,7 @@ const TaskBoxData = {
   status: 'idle',
   error: null,
 };
-//
+
 /*
  * The store is created here.
  * You can read more about Redux Toolkit's slices in the docs:
@@ -660,10 +661,10 @@ const TasksSlice = createSlice({
     },
   },
 });
-//
+
 // The actions contained in the slice are exported for usage in our components
 export const { updateTaskState } = TasksSlice.actions;
-//
+
 /*
  * Our app's store configuration goes here.
  * Read more about Redux's configureStore in the docs:
@@ -674,25 +675,20 @@ const store = configureStore({
     taskbox: TasksSlice.reducer,
   },
 });
-//
+
 export default store;
-//
-// EOF
 ```
 
 - TaskList コンポーネントで、Redux のストアに 「connect (接続)」し、ストアから、気になるタスクのリストを描画します。
-  - `TaskList.js`を書き換える
+  - `TaskList.jsx`を書き換える
 ```JavaScript
-// src/components/TaskList.js
+// src/components/TaskList.jsx
 import React from 'react';
-import PropTypes from 'prop-types';
+import Task from './Task';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateTaskState } from '../lib/store';
-import Task from './Task';
-//
-// export default function TaskList({ loading, tasks, onPinTask, onArchiveTask }) {
+
 export default function TaskList() {
-  // for connect store
   // We're retrieving our state from the store
   const tasks = useSelector((state) => {
     const tasksInOrder = [
@@ -704,8 +700,11 @@ export default function TaskList() {
     );
     return filteredTasks;
   });
+
   const { status } = useSelector((state) => state.taskbox);
+
   const dispatch = useDispatch();
+
   const pinTask = (value) => {
     // We're dispatching the Pinned event back to our store
     dispatch(updateTaskState({ id: value, newTaskState: 'TASK_PINNED' }));
@@ -745,7 +744,7 @@ export default function TaskList() {
       </div>
     );
   }
-  //
+
   return (
     <div className="list-items" data-testid="success" key={"success"}>
       {tasks.map((task) => (
@@ -759,36 +758,32 @@ export default function TaskList() {
     </div>
   );
 }
-//
-// check properties
-TaskList.propTypes = {
-    /** Checks if it's in loading state */
-    loading: PropTypes.bool,
-    /** The list of tasks */
-    tasks: PropTypes.arrayOf(Task.propTypes.task).isRequired,
-    /** Event to change the task to pinned */
-    onPinTask: PropTypes.func,
-    /** Event to change the task to archived */
-    onArchiveTask: PropTypes.func,
-};
-TaskList.defaultProps = {
-    loading: false,
-};
-//
-// EOF
 ```
 
+#### 動作確認
+
+- 起動はできるが、まだ操作に対する反応はしない
+  * ⇒　ほんと？
+
+| 01．起動直後 | 02．操作後 |
+|-----|-----|
+| 起動直後（Default） | チェックボックスクリック⇒反応しない |
+| ![image](./images/041_initial-tasklist-default.png) | ![image](./images/042_clicked-tasklist-default.png) |
+
 ### デコレーターにコンテキストを渡す
-- storybookのエラー解決のため、デコレーターに頼ることができ、Storybook の中でモックストアを利用する
+- storybookの~~エラー~~解決のため、デコレーターに頼ることができ、Storybook の中でモックストアを利用する
 
 ```JavaScript
-// src/components/TaskList.stories.js
+// TaskList.stories.jsx
 import React from 'react';
-import { Provider } from 'react-redux';
-import { configureStore, createSlice } from '@reduxjs/toolkit';
+
 import TaskList from './TaskList';
 import * as TaskStories from './Task.stories';
-//
+
+import { Provider } from 'react-redux';
+
+import { configureStore, createSlice } from '@reduxjs/toolkit';
+
 // A super-simple mock of the state of the store
 export const MockedState = {
   tasks: [
@@ -802,7 +797,7 @@ export const MockedState = {
   status: 'idle',
   error: null,
 };
-//
+
 // A super-simple mock of a redux store
 const Mockstore = ({ taskboxState, children }) => (
   <Provider
@@ -827,21 +822,21 @@ const Mockstore = ({ taskboxState, children }) => (
     {children}
   </Provider>
 );
-//
+
 export default {
   component: TaskList,
   title: 'TaskList',
   decorators: [(story) => <div style={{ padding: "3rem" }}>{story()}</div>],
   excludeStories: /.*MockedState$/,
 };
-//
+
 const Template = () => <TaskList />;
-//
+
 export const Default = Template.bind({});
 Default.decorators = [
   (story) => <Mockstore taskboxState={MockedState}>{story()}</Mockstore>,
 ];
-//
+
 export const WithPinnedTasks = Template.bind({});
 WithPinnedTasks.decorators = [
   (story) => {
@@ -862,7 +857,7 @@ WithPinnedTasks.decorators = [
     );
   },
 ];
-//
+
 export const Loading = Template.bind({});
 Loading.decorators = [
   (story) => (
@@ -876,7 +871,7 @@ Loading.decorators = [
     </Mockstore>
   ),
 ];
-//
+
 export const Empty = Template.bind({});
 Empty.decorators = [
   (story) => (
@@ -890,10 +885,17 @@ Empty.decorators = [
     </Mockstore>
   ),
 ];
-//
-//
-// EOF
 ```
+
+#### 動作確認
+
+- 操作できるようになった
+
+| 01．起動直後 | 02．操作後 |
+|-----|-----|
+| 起動直後（Default） | Pinnedをクリック⇒反応 |
+| ![image](./images/043_modified-story-tasklist-default.png) | ![image](./images/044_pinned-story-tasklist-default.png) |
+
 
 ## 画面を作る
 [to Top](#)
