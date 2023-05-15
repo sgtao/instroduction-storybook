@@ -905,231 +905,246 @@ Empty.decorators = [
 - 作る画面は、(Redux から自分でデータを取得する) TaskList をラップして、Redux からの error フィールドを追加するだけです。
   - まず、Redux ストア (src/lib/store.js 内) をアップデートするところから始めましょう:
 ```js
-// src/lib/store.js
+// src/lib/store.jsx
 /* A simple redux store/actions/reducer implementation.
  * A true app would be more complex and separated into different files.
  */
 import {
-  configureStore,
-  createSlice,
-+ createAsyncThunk,
+    configureStore,
+    createSlice,
+    createAsyncThunk, // add package
 } from '@reduxjs/toolkit';
-//
+
 /*
  * The initial state of our store when the app loads.
  * Usually, you would fetch this from a server. Let's not worry about that now
  */
-//
+
 const TaskBoxData = {
-  tasks: [],
-  status: "idle",
-  error: null,
+    tasks: [],
+    status: "idle",
+    error: null,
 };
-//
+
+// add fetchTasks
 /*
  * Creates an asyncThunk to fetch tasks from a remote endpoint.
  * You can read more about Redux Toolkit's thunks in the docs:
  * https://redux-toolkit.js.org/api/createAsyncThunk
  */
-+ export const fetchTasks = createAsyncThunk('todos/fetchTodos', async () => {
-+   const response = await fetch(
-+     'https://jsonplaceholder.typicode.com/todos?userId=1'
-+   );
-+   const data = await response.json();
-+   const result = data.map((task) => ({
-+     id: `${task.id}`,
-+     title: task.title,
-+     state: task.completed ? 'TASK_ARCHIVED' : 'TASK_INBOX',
-+   }));
-+   return result;
-+ });
-//
+export const fetchTasks = createAsyncThunk('todos/fetchTodos', async () => {
+    const response = await fetch(
+        'https://jsonplaceholder.typicode.com/todos?userId=1'
+    );
+    const data = await response.json();
+    const result = data.map((task) => ({
+        id: `${task.id}`,
+        title: task.title,
+        state: task.completed ? 'TASK_ARCHIVED' : 'TASK_INBOX',
+    }));
+    return result;
+});
+
 /*
  * The store is created here.
  * You can read more about Redux Toolkit's slices in the docs:
  * https://redux-toolkit.js.org/api/createSlice
  */
 const TasksSlice = createSlice({
-  name: 'taskbox',
-  initialState: TaskBoxData,
-  reducers: {
-    updateTaskState: (state, action) => {
-      const { id, newTaskState } = action.payload;
-      const task = state.tasks.findIndex((task) => task.id === id);
-      if (task >= 0) {
-        state.tasks[task].state = newTaskState;
-      }
+    name: 'taskbox',
+    initialState: TaskBoxData,
+    reducers: {
+        updateTaskState: (state, action) => {
+            const { id, newTaskState } = action.payload;
+            const task = state.tasks.findIndex((task) => task.id === id);
+            if (task >= 0) {
+                state.tasks[task].state = newTaskState;
+            }
+        },
     },
-  },
-  /*
-   * Extends the reducer for the async actions
-   * You can read more about it at https://redux-toolkit.js.org/api/createAsyncThunk
-   */
-+  extraReducers(builder) {
-+    builder
-+    .addCase(fetchTasks.pending, (state) => {
-+      state.status = 'loading';
-+      state.error = null;
-+      state.tasks = [];
-+    })
-+    .addCase(fetchTasks.fulfilled, (state, action) => {
-+      state.status = 'succeeded';
-+      state.error = null;
-+      // Add any fetched tasks to the array
-+      state.tasks = action.payload;
-+     })
-+    .addCase(fetchTasks.rejected, (state) => {
-+      state.status = 'failed';
-+      state.error = "Something went wrong";
-+      state.tasks = [];
-+    });
-+ },
+    // add extraReducers
+    /*
+     * Extends the reducer for the async actions
+     * You can read more about it at https://redux-toolkit.js.org/api/createAsyncThunk
+     */
+    extraReducers(builder) {
+        builder
+            .addCase(fetchTasks.pending, (state) => {
+                state.status = 'loading';
+                state.error = null;
+                state.tasks = [];
+            })
+            .addCase(fetchTasks.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+                state.error = null;
+                // Add any fetched tasks to the array
+                state.tasks = action.payload;
+            })
+            .addCase(fetchTasks.rejected, (state) => {
+                state.status = 'failed';
+                state.error = "Something went wrong";
+                state.tasks = [];
+            });
+    },
 });
-//
+
 // The actions contained in the slice are exported for usage in our components
 export const { updateTaskState } = TasksSlice.actions;
-//
+
 /*
  * Our app's store configuration goes here.
  * Read more about Redux's configureStore in the docs:
  * https://redux-toolkit.js.org/api/configureStore
  */
 const store = configureStore({
-  reducer: {
-    taskbox: TasksSlice.reducer,
-  },
+    reducer: {
+        taskbox: TasksSlice.reducer,
+    },
 });
-//
+
 export default store;
 ```
 
-  - InboxScreen.js を src/components ディレクトリに作成しましょう:
+- InboxScreen.js を src/components ディレクトリに作成しましょう:
 ```js
-// src/components/InboxScreen.js
+// src/components/InboxScreen.jsx
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTasks } from '../lib/store';
 import TaskList from './TaskList';
-//
-export default function InboxScreen() {
-  const dispatch = useDispatch();
-  // We're retrieving the error field from our updated store
-  const { error } = useSelector((state) => state.taskbox);
-  // The useEffect triggers the data fetching when the component is mounted
-  useEffect(() => {
-    dispatch(fetchTasks());
-  }, []);
 
-  if (error) {
+export default function InboxScreen() {
+    const dispatch = useDispatch();
+    // We're retrieving the error field from our updated store
+    const { error } = useSelector((state) => state.taskbox);
+    // The useEffect triggers the data fetching when the component is mounted
+    useEffect(() => {
+        dispatch(fetchTasks());
+    }, []);
+
+    if (error) {
+        return (
+            <div className="page lists-show">
+                <div className="wrapper-message">
+                    <span className="icon-face-sad" />
+                    <div className="title-message">Oh no!</div>
+                    <div className="subtitle-message">Something went wrong</div>
+                </div>
+            </div>
+        );
+    }
     return (
-      <div className="page lists-show">
-        <div className="wrapper-message">
-          <span className="icon-face-sad" />
-          <div className="title-message">Oh no!</div>
-          <div className="subtitle-message">Something went wrong</div>
+        <div className="page lists-show">
+            <nav>
+                <h1 className="title-page">
+                    <span className="title-wrapper">Taskbox</span>
+                </h1>
+            </nav>
+            <TaskList />
         </div>
-      </div>
     );
-  }
-  return (
-    <div className="page lists-show">
-      <nav>
-        <h1 className="title-page">
-          <span className="title-wrapper">Taskbox</span>
-        </h1>
-      </nav>
-      <TaskList />
-    </div>
-  );
 }
 ```
 
-  - さらに、App コンポーネントを InboxScreen を描画するように変更します：
+- さらに、App コンポーネントを InboxScreen を描画するように変更します：
 ```js
-// src/App.js
-- import logo from './logo.svg';
-- import './App.css';
-+ import './index.css';
-+ import store from './lib/store';
-//
-+ import { Provider } from 'react-redux';
-+ import InboxScreen from './components/InboxScreen';
-//
+// src/App.jsx
+import './index.css';
+import store from './lib/store';
+
+import { Provider } from 'react-redux';
+import InboxScreen from './components/InboxScreen';
+
 function App() {
   return (
--   <div className="App">
--     <header className="App-header">
--       <img src={logo} className="App-logo" alt="logo" />
--       <p>
--         Edit <code>src/App.js</code> and save to reload.
--       </p>
--       <a
--         className="App-link"
--         href="https://reactjs.org"
--         target="_blank"
--         rel="noopener noreferrer"
--       >
--         Learn React
--       </a>
--     </header>
--   </div>
-+   <Provider store={store}>
-+     <InboxScreen />
-+   </Provider>
+    <Provider store={store}>
+      <InboxScreen />
+    </Provider>
   );
 }
+export default App;
 ```
 
-  - src/App.test.js をアップデートする：
-```
-// src/App.test.js
-...
-```
 
-  - タスクのレンダリングは Redux ストアに依存しているので、ＴaskＬist同様に InboxScreen.stories.js でストーリーを設定します:
+- InboxScreen.stories.jsx でストーリーを設定します:
 ```js
-// src/components/InboxScreen.stories.js
+// src/components/InboxScreen.stories.jsx
 import React from 'react';
-//
+
 import InboxScreen from './InboxScreen';
 import store from '../lib/store';
-//
+
 import { Provider } from 'react-redux';
-//
+
 export default {
   component: InboxScreen,
   title: 'InboxScreen',
   decorators: [(story) => <Provider store={store}>{story()}</Provider>],
 };
-//
+
 const Template = () => <InboxScreen />;
-//
+
 export const Default = Template.bind({});
 export const Error = Template.bind({});
 ```
 
+#### 動作確認
+
+- storybookを再起動して動作確認
+  * React Appも稼働できるので、`yarn dev`を`r`でRestartする
+
+| React App | storybook |
+|-----|-----|
+| ![image](./images/051_react-app-tasklist.png) | ![image](./images/052_storybook-inbox-screen.png) |
 
 ### API をモックする
-- Mock Service Worker と Storybook's MSW addon を使用して、API をモックする
+- [Mock Service Worker](https://mswjs.io/) と [Storybook's MSW addon](https://storybook.js.org/addons/msw-storybook-addon) を使用して、API をモックします
+  * Mock Service Worker は、API モックライブラリです
 
-  - public フォルダの中にサービスワーカーを生成します。:
+#### パッケージインストール
+- 下のコマンドを実行し、public フォルダの中にサービスワーカーを生成します。
 ```shell
 yarn init-msw
 ```
 
-  - .storybook/preview.js をアップデートしてそれらを初期化する
+- 実行ログ
+```sh
+$ yarn init-msw
+yarn run v1.22.19
+$ msw init public/
+Initializing the Mock Service Worker at "/mnt/d/home/shogo/idea/2023_idea/20230503_storybook-trial/11_introduction-of-storybook/20_Guide/21_IntroToStorybook/taskbox/public"...
+
+Service Worker successfully created!
+/mnt/d/home/shogo/idea/2023_idea/20230503_storybook-trial/11_introduction-of-storybook/20_Guide/21_IntroToStorybook/taskbox/public/mockServiceWorker.js
+
+Continue by creating a mocking definition module in your application:
+
+https://mswjs.io/docs/getting-started/mocks
+
+INFO In order to ease the future updates to the worker script,
+we recommend saving the path to the worker directory in your package.json.
+
+? Do you wish to save "public" as the worker directory? Yes
+Writing "msw.workerDirectory" to "/mnt/d/home/shogo/idea/2023_idea/20230503_storybook-trial/11_introduction-of-storybook/20_Guide/21_IntroToStorybook/taskbox/package.json"...
+Done in 16.25s.
+```
+
+#### セットアップ
+- .storybook/preview.js をアップデートしてそれらを初期化する
 ```js
 // .storybook/preview.js
+/** @type { import('@storybook/react').Preview } */
 import '../src/index.css';
-//
-+ // Registers the msw addon
-+ import { initialize, mswDecorator } from 'msw-storybook-addon';
-+ // Initialize MSW
-+ initialize();
-//
-+ // Provide the MSW addon decorator globally
-+ export const decorators = [mswDecorator];
-//
+
+// Registers the msw addon
+import { initialize, mswDecorator } from 'msw-storybook-addon'; // add package
+
+// Initialize MSW
+initialize(); // add initialzise
+
+// Provide the MSW addon decorator globally
+export const decorators = [mswDecorator]; // add decorator
+
 //👇 Configures Storybook to log the actions( onArchiveTask and onPinTask ) in the UI.
 export const parameters = {
   actions: { argTypesRegex: '^on[A-Z].*' },
@@ -1140,55 +1155,76 @@ export const parameters = {
     },
   },
 };
+
 ```
 
-  - InboxScreen のストーリーを更新し、リモート API 呼び出しをモックする parameter を組み込みます:
+- InboxScreen のストーリーを更新し、リモート API 呼び出しをモックする parameter を組み込みます:
+  * JSONデータは[JSON Placeholder](https://jsonplaceholder.typicode.com/)から取得
 ```js
-// src/components/InboxScreen.stories.js
+// src/components/InboxScreen.stories.jsx
 import React from 'react';
-//
+
 import InboxScreen from './InboxScreen';
 import store from '../lib/store';
-+ import { rest } from 'msw';
-+ import { MockedState } from './TaskList.stories';
+import { rest } from 'msw'; // add package
+import { MockedState } from './TaskList.stories'; // add package
 import { Provider } from 'react-redux';
-//
+
 export default {
-  component: InboxScreen,
-  title: 'InboxScreen',
-  decorators: [(story) => <Provider store={store}>{story()}</Provider>],
+    component: InboxScreen,
+    title: 'InboxScreen',
+    decorators: [(story) => <Provider store={store}>{story()}</Provider>],
 };
-//
+
 const Template = () => <InboxScreen />;
-//
+
 export const Default = Template.bind({});
-+ Default.parameters = {
-+   msw: {
-+     handlers: [
-+       rest.get(
-+         'https://jsonplaceholder.typicode.com/todos?userId=1',
-+         (req, res, ctx) => {
-+           return res(ctx.json(MockedState.tasks));
-+         }
-+       ),
-+     ],
-+   },
-+ };
-//
+// add Default.parameters
+Default.parameters = {
+    msw: {
+        handlers: [
+            rest.get(
+                'https://jsonplaceholder.typicode.com/todos?userId=1',
+                (req, res, ctx) => {
+                    return res(ctx.json(MockedState.tasks));
+                }
+            ),
+        ],
+    },
+};
+
 export const Error = Template.bind({});
-+ Error.parameters = {
-+   msw: {
-+     handlers: [
-+       rest.get(
-+         'https://jsonplaceholder.typicode.com/todos?userId=1',
-+         (req, res, ctx) => {
-+           return res(ctx.status(403));
-+         }
-+       ),
-+     ],
-+   },
-+ };
+// add Error.parameters
+Error.parameters = {
+    msw: {
+        handlers: [
+            rest.get(
+                'https://jsonplaceholder.typicode.com/todos?userId=1',
+                (req, res, ctx) => {
+                    return res(ctx.status(403));
+                }
+            ),
+        ],
+    },
+};
 ```
+
+#### 動作確認
+- storybookを再起動して、InboxScreenの動作を確認
+
+##### Defaultモード
+
+- APIで取得したデータを表示している
+
+![image](./images/053_storybook-inbox-screen-loading-mocked-api.png)
+
+##### Errorモード
+
+- APIリクエストに対して、403レスポンスが返っているケースの画面
+
+![image](./images/054_storybook-inbox-screen-error-response.png)
+
+
 
 ### Interactive stories
 
